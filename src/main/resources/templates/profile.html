@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<p><a href="/logout">LogOut</a></p>
+
+<div>
+    <span style="color: red">INVITES:</span>
+    <table border="1">
+        <tr th:each="i:${invites}">
+            <td th:text="${i.from.name}"></td>
+            <td th:text="${i.text}"></td>
+            <td th:text="${i.sendDate}"></td>
+            <td th:text="${i.status}"></td>
+            <td><form action="/acceptInvite" method="post">
+                <input type="hidden" th:value="${i.id}" name="id">
+                <input type="hidden" value="yes" name="answer">
+                <input value="accept" type="submit">
+            </form>
+                <form action="/acceptInvite" method="post">
+                    <input type="hidden" th:value="${i.id}" name="id">
+                    <input type="hidden" value="no" name="answer">
+                    <input value="refuse" type="submit">
+                </form>
+            </td>
+        </tr>
+    </table>
+</div>
+<div>
+    <span style="color: red">FRIENDS:</span>
+    <table border="1">
+        <tr>
+            <td>Photo</td>
+            <td>Name</td>
+            <td>Surname</td>
+            <td>Email</td>
+
+        </tr>
+        <tr th:each="friend:${friends}">
+            <td><img th:if="${friend.imagePath != null}" th:src="@{/getImage(imagePath=${friend.imagePath})}" width="40px" height="40px"></td>
+            <td th:text="${friend.name}"></td>
+            <td th:text="${friend.surname}"></td>
+            <td th:text="${friend.email}"></td>
+        </tr>
+
+    </table>
+</div>
+<div>
+    <span style="color: red">All USERS:</span>
+    <table border="1">
+        <tr style="background-color: aquamarine">
+            <td>image</td>
+            <td>name</td>
+            <td>surname</td>
+            <td>email</td>
+        </tr>
+        <tr th:each="user:${users}">
+            <td><img th:if="${user.imagePath != null}" th:src="@{/getImage(imagePath=${user.imagePath})}" width="40px" height="40px"></td>
+            <td th:text="${user.name}"></td>
+            <td th:text="${user.surname}"></td>
+            <td th:text="${user.email}"></td>
+            <td><form action="/sendInvite" method="post">
+                <input type="hidden" name="toid" th:value="${user.id}" >
+                <input type="submit" value="be friends">
+            </form></td>
+
+        </tr>
+    </table>
+    <form action="/search" method="get">
+        <input type="text" name="keyword">
+        <input type="submit" value="search">
+    </form>
+</div>
+<div>
+    <span style="color: red">SEND MASSAGES:</span>
+    <form action="/sendmassage" method="post" id="send">
+        <textarea placeholder="write massage" ></textarea><br>
+        <select name="toid">
+            <option th:each="f:${friends}" th:value="${f.id}" th:text="${f.name +' ' +f.surname}"></option>
+        </select><br>
+        <input type="submit" value="Send">
+    </form>
+</div>
+
+<div>
+   <span style="color: red">MY INBOX MASSAGES:</span>
+    <table border="1">
+
+        <tr>
+            <td>Friend Name</td>
+            <td>text</td>
+            <td>date</td>
+        </tr>
+        <tr th:each="m:${massages}">
+            <td th:text="${m.from.name}"></td>
+            <td th:text="${m.text}"></td>
+            <td th:text="${m.date}"></td>
+        </tr>
+    </table>
+
+</div>
+<div>
+   <span style="color: red">MY SENT MASSAGES:</span>
+    <table border="1">
+        <tr>
+            <td>Friend Name</td>
+            <td>text</td>
+            <td>date</td>
+        </tr>
+        <tr th:each="m:${massages2}">
+            <td th:text="${m.to.name}"></td>
+            <td th:text="${m.text}"></td>
+            <td th:text="${m.date}"></td>
+        </tr>
+    </table>
+
+</div>
+
+
+</body>
+</html>
