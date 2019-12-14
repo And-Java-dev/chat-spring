@@ -48,6 +48,21 @@ public class User {
     )
     private List<User> friendOf;
 
+    public void setFriends(List<User> friends) {
+        this.friends = friends;
+    }
+
+    public void setFriendOf(List<User> friendOf) {
+        this.friendOf = friendOf;
+    }
+
+    public List<User> getFriends() {
+        return friends;
+    }
+
+    public List<User> getFriendOf() {
+        return friendOf;
+    }
 
     @Column
     @Enumerated(EnumType.STRING)

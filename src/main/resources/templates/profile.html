@@ -44,6 +44,7 @@
             <td th:text="${friend.name}"></td>
             <td th:text="${friend.surname}"></td>
             <td th:text="${friend.email}"></td>
+            <td style="background-color: darkcyan"><a th:href="@{/delete(id=${friend.id})}">Delete</a>
         </tr>
 
     </table>
@@ -77,7 +78,7 @@
 <div>
     <span style="color: red">SEND MASSAGES:</span>
     <form action="/sendmassage" method="post" id="send">
-        <textarea placeholder="write massage" ></textarea><br>
+        <textarea placeholder="write massage"name="text"></textarea><br>
         <select name="toid">
             <option th:each="f:${friends}" th:value="${f.id}" th:text="${f.name +' ' +f.surname}"></option>
         </select><br>

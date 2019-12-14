@@ -26,6 +26,7 @@ public class Invite {
     @ManyToOne
     private User to;
 
+    @Column
     private String text;
 
     @Column

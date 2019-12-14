@@ -38,9 +38,6 @@ public class UserController {
     @Autowired
     private MassageRepository massageRepository;
 
-//    @Autowired
-//    private UserFriendsRepository userFriendsRepository;
-
 
     @Value("${image.upload.dir}")
     private String imageUploadDir;
@@ -55,16 +52,16 @@ public class UserController {
         User byEmail = userRepository.findByEmail(user.getEmail());
         if (byEmail == null) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
-        String filName = System.currentTimeMillis()+ " " + multipartfile.getOriginalFilename();
-        File file = new File(imageUploadDir  + filName);
-        try {
-            multipartfile.transferTo(file);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        user.setImagePath(filName);
-        userRepository.save(user);
-        return "redirect:/";
+            String filName = System.currentTimeMillis() + " " + multipartfile.getOriginalFilename();
+            File file = new File(imageUploadDir + filName);
+            try {
+                multipartfile.transferTo(file);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            user.setImagePath(filName);
+            userRepository.save(user);
+            return "redirect:/";
         }
         return "redirect:/register";
     }
@@ -73,19 +70,18 @@ public class UserController {
     @GetMapping("/profile")
     public String profile(ModelMap modelMap, @AuthenticationPrincipal CurrentUser currentUser) {
         User userById = userRepository.findUserById(currentUser.getUser().getId());
+        List<User> friends = userById.getFriends();
         modelMap.addAttribute("user", currentUser.getUser());
-        modelMap.addAttribute("friends",userById.getFriends());
-        modelMap.addAttribute("invites",inviteRepository.findAllByTo(currentUser.getUser()));
-        modelMap.addAttribute("massages",massageRepository.findAllByTo(currentUser.getUser()));
-        modelMap.addAttribute("massages2",massageRepository.findAllByFrom(currentUser.getUser()));
+        modelMap.addAttribute("friends", friends);
+        modelMap.addAttribute("invites", inviteRepository.findAllByTo(currentUser.getUser()));
+        modelMap.addAttribute("massages", massageRepository.findAllByTo(currentUser.getUser()));
+        modelMap.addAttribute("massages2", massageRepository.findAllByFrom(currentUser.getUser()));
         return "profile";
     }
 
 
-
-
     @PostMapping("/sendmassage")
-    public String sendMassage(@ModelAttribute Massage massage, @RequestParam(value = "toid") int toId,@AuthenticationPrincipal CurrentUser currentUser ){
+    public String sendMassage(@ModelAttribute Massage massage, @RequestParam(value = "toid") int toId, @AuthenticationPrincipal CurrentUser currentUser) {
 
         User byId = userRepository.findUserById(toId);
         massage.setTo(byId);
@@ -98,12 +94,12 @@ public class UserController {
 
 
     @PostMapping("/sendInvite")
-    public String sendInvite(@ModelAttribute Invite invite, @RequestParam(value = "toid") int toId, @AuthenticationPrincipal CurrentUser currentUser ){
+    public String sendInvite(@ModelAttribute Invite invite, @RequestParam(value = "toid") int toId, @AuthenticationPrincipal CurrentUser currentUser) {
         User byId = userRepository.findUserById(toId);
         invite.setTo(byId);
         invite.setFrom(currentUser.getUser());
         invite.setSendDate(new Date());
-        invite.setText(currentUser.getUser().getName() + " " + currentUser.getUser().getSurname() +" wants to add you to his friends list");
+        invite.setText(currentUser.getUser().getName() + " " + currentUser.getUser().getSurname() + " wants to add you to his friends list");
         invite.setStatus(InviteStatus.PENDING);
         inviteRepository.save(invite);
         return "redirect:/profile";
@@ -124,23 +120,23 @@ public class UserController {
     }
 
     @PostMapping("/acceptInvite")
-    public String acceptInvite( @AuthenticationPrincipal CurrentUser currentUser,
-                               @RequestParam(value = "id") int Id,@RequestParam(value = "answer") String answer){
+    public String acceptInvite(@RequestParam(value = "id") int Id, @RequestParam(value = "answer") String answer,
+                               @AuthenticationPrincipal CurrentUser currentUser) {
 
 
-        if (answer.equals("yes")){
-            inviteRepository.changeInviteStatus(InviteStatus.ACCEPT.name(),Id);
+        if (answer.equals("yes")) {
+            inviteRepository.changeInviteStatus(InviteStatus.ACCEPT.name(), Id);
             Invite inviteById = inviteRepository.findInviteById(Id);
             User userById = userRepository.findUserById(inviteById.getFrom().getId());
-            User userById1 = userRepository.findUserById(inviteById.getTo().getId());
+            User userById1 = userRepository.findUserById(currentUser.getUser().getId());
             List<User> friends = new LinkedList<>();
-            friends.add(userById);
             List<User> friends2 = new LinkedList<>();
+            friends.add(userById);
             friends2.add(userById1);
-            userById1.setFriends(friends2);
-            userById.setFriends(friends);
-            userRepository.save(userById);
+            userById1.setFriendOf(friends);
             userRepository.save(userById1);
+            userById.setFriendOf(friends2);
+            userRepository.save(userById);
             inviteRepository.deleteById(Id);
         }else{
             inviteRepository.changeInviteStatus(InviteStatus.DENIED.name(),Id);
@@ -152,16 +148,27 @@ public class UserController {
     }
 
     @GetMapping("/search")
-    public String search(ModelMap modelMap, @RequestParam String keyword,@AuthenticationPrincipal CurrentUser currentUser){
+    public String search(ModelMap modelMap, @RequestParam String keyword, @AuthenticationPrincipal CurrentUser currentUser) {
         List<User> users = userRepository.findByName(keyword);
-        modelMap.addAttribute("users",users);
+        modelMap.addAttribute("users", users);
         User userById = userRepository.findUserById(currentUser.getUser().getId());
         modelMap.addAttribute("user", currentUser.getUser());
-        modelMap.addAttribute("friends",userById.getFriends());
-        modelMap.addAttribute("invites",inviteRepository.findAllByTo(currentUser.getUser()));
-        modelMap.addAttribute("massages",massageRepository.findAllByTo(currentUser.getUser()));
-        modelMap.addAttribute("massages2",massageRepository.findAllByFrom(currentUser.getUser()));
+        modelMap.addAttribute("friends", userById.getFriends());
+        modelMap.addAttribute("invites", inviteRepository.findAllByTo(currentUser.getUser()));
+        modelMap.addAttribute("massages", massageRepository.findAllByTo(currentUser.getUser()));
+        modelMap.addAttribute("massages2", massageRepository.findAllByFrom(currentUser.getUser()));
         return "profile";
+    }
+
+    @GetMapping("/delete")
+    public String deleteUserFriends(@AuthenticationPrincipal CurrentUser currentUser, @RequestParam("id") int id) {
+        User userById = userRepository.findUserById(id);
+        User userById2 = currentUser.getUser();
+        userById.setFriendOf(null);
+        userById2.setFriendOf(null);
+        userRepository.save(userById);
+        userRepository.save(userById2);
+        return "redirect:/profile";
     }
 
 }
