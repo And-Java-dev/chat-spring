@@ -6,6 +6,7 @@ import com.example.chatspring.repository.InviteRepository;
 import com.example.chatspring.repository.MassageRepository;
 import com.example.chatspring.repository.UserRepository;
 import com.example.chatspring.security.CurrentUser;
+import com.example.chatspring.service.EmailServiceImpl;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,25 +43,45 @@ public class UserController {
     @Value("${image.upload.dir}")
     private String imageUploadDir;
 
+    @Autowired
+    private EmailServiceImpl emailService;
+
     @GetMapping("/register")
     public String register() {
         return "register";
     }
 
+
+    @GetMapping("/activate")
+    public String activate(@RequestParam("token") String token) {
+        User byToken = userRepository.findByToken(token);
+        if (byToken != null) {
+            byToken.setEnable(true);
+            byToken.setToken(null);
+            userRepository.save(byToken);
+            emailService.sendMessageWithAttachment(byToken.getEmail(),"Success","Success","D:\\003\\102CANON\\IMG_1225.JPG");
+        }
+        return "redirect:/";
+    }
+
     @PostMapping("/register")
-    public String registerPost(@ModelAttribute User user, @RequestParam("imgPath") MultipartFile multipartfile) {
+    public String registerPost(@ModelAttribute User user, @RequestParam("imgPath") MultipartFile multipartfile) throws IOException {
         User byEmail = userRepository.findByEmail(user.getEmail());
         if (byEmail == null) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             String filName = System.currentTimeMillis() + " " + multipartfile.getOriginalFilename();
             File file = new File(imageUploadDir + filName);
-            try {
-                multipartfile.transferTo(file);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            user.setEnable(false);
+            user.setToken(UUID.randomUUID().toString());
+            multipartfile.transferTo(file);
             user.setImagePath(filName);
             userRepository.save(user);
+            String link = "http://localhost:8080/activate?token=" + user.getToken();
+            emailService.sendSimpleMessage(user.getEmail(),
+                    "Welcome",
+                    "Congratulations! Dear "+user.getName()+" "+user.getSurname()+" have successfully register to system! \n" +
+                            "You have to activate your account by this link " + link);
+
             return "redirect:/";
         }
         return "redirect:/register";

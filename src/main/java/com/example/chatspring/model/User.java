@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
+import javax.validation.constraints.Email;
 import java.util.List;
 import java.util.Set;
 
@@ -29,6 +30,7 @@ public class User {
     private String surname;
 
     @Column
+//    @Email
     private String email;
 
     @Column
@@ -71,5 +73,10 @@ public class User {
     @Column(name = "img_path")
     private String ImagePath;
 
+    @Column
+    private boolean isEnable;
+
+    @Column
+    private String token;
 
 }

@@ -1,5 +1,6 @@
 package com.example.chatspring.security;
 
+import com.example.chatspring.handler.CustomAuthenticationFailureHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
